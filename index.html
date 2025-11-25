@@ -483,20 +483,13 @@
     }
 
 /* ------------------------------
-   6. FINISH — DOWNLOAD ONE FILE
+   6. FINISH — SEND TO GOOGLE SHEETS
 ------------------------------ */
 
 function finishExperiment() {
   setKeyHandler(null);
 
-  app.innerHTML = `
-    <div class="intro-text">
-      <p><strong>Thank you for participating!</strong></p>
-      <p>Your data file is downloading now.</p>
-    </div>
-  `;
-
-  // Combine into one dataset
+  // Combine similarity + label results into one array
   const combined = [];
 
   similarityResults.forEach(r => {
@@ -529,28 +522,73 @@ function finishExperiment() {
     });
   });
 
-  // Create CSV
-  const header = [
-    "Participant","Age","Gender","Task","Trial_index",
-    "left_skeleton","right_skeleton","Rating",
-    "Skeleton","Action"
-  ];
+  // Show "sending" message
+  app.innerHTML = `
+    <div class="intro-text">
+      <p><strong>Thank you for participating!</strong></p>
+      <p>Your responses are being securely sent. Please do not close this window yet.</p>
+    </div>
+  `;
 
-  const csv = [
-    header.join(","),
-    ...combined.map(row =>
-      header.map(h => JSON.stringify(row[h] ?? "")).join(",")
-    )
-  ].join("\n");
+  // >>> Put your Apps Script Web app URL here <<<
+  const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwqvm5Hp_u3OtWQU3e_10wl9IX3xRc5rV0WkGAfiaEy45din86wbjiuiaEsOc_G4ADC/exec";
 
-  // Download
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url;
-  a.download = "idilsu_experiment_data.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  // Try to send data to Google Sheets
+  fetch(ENDPOINT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: combined })
+  })
+  .then(() => {
+    app.innerHTML = `
+      <div class="intro-text">
+        <p><strong>Thank you for participating!</strong></p>
+        <p>Your responses have been recorded.</p>
+        <p>You may now close this window.</p>
+      </div>
+    `;
+  })
+  .catch(err => {
+    console.error("Upload failed:", err);
+
+    // FALLBACK: download CSV if upload fails
+    const header = [
+      "Participant","Age","Gender","Task","Trial_index",
+      "left_skeleton","right_skeleton","Rating",
+      "Skeleton","Action"
+    ];
+
+    const csv = [
+      header.join(","),
+      ...combined.map(row =>
+        header.map(h => {
+          // map header names to object keys
+          const key =
+            h === "Task" ? "phase" :
+            h === "Action" ? "label" :
+            h.toLowerCase();
+          return JSON.stringify(row[key] ?? "");
+        }).join(",")
+      )
+    ].join("\n");
+
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = "idilsu_experiment_data_backup.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+
+    app.innerHTML = `
+      <div class="intro-text">
+        <p><strong>Thank you for participating!</strong></p>
+        <p>We had trouble sending your data automatically,
+        so a file has been downloaded instead.  
+        Please send it to the experimenter.</p>
+      </div>
+    `;
+  });
 }
 
     /* ------------------------------
