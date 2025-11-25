@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Idil Su's Experiment</title>
+  <style>
+    body {
+      max-width: 1000px;
+      margin: 40px auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 0.4em;
+    }
+    #app {
+      margin-top: 20px;
+    }
+
+    .intro-text {
+      max-width: 700px;
+      margin: 0 auto 25px auto;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+
+    .name-input {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    .name-input input[type="text"],
+    .name-input input[type="number"] {
+      width: 60%;
+      max-width: 350px;
+      padding: 8px 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    .gender-options label {
+      margin: 0 8px;
+      font-size: 0.95rem;
+    }
+
+    /* Progress bar */
+    .progress-wrapper {
+      width: 80%;
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background-color: #eee;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #4a90e2;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .progress-text {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 6px;
+    }
+
+    .video-pair {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 30px 0 20px 0;
+      flex-wrap: wrap;
+    }
+    .video-block {
+      max-width: 440px;
+    }
+    .video-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 1.05rem;
+    }
+    video {
+      width: 100%;
+      max-width: 440px;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .question {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    /* Likert scale */
+    .likert-wrapper {
+      margin-top: 15px;
+    }
+    .rating-buttons {
+      display: inline-flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .rating-buttons button {
+      padding: 12px 18px;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      background-color: #f9f9f9;
+      transition: background-color 0.15s, transform 0.05s;
+    }
+    .rating-buttons button:hover {
+      background-color: #e6f0ff;
+      transform: translateY(-1px);
+    }
+    .likert-labels {
+      display: flex;
+      justify-content: space-between;
+      max-width: 440px;
+      margin: 0 auto;
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    .btn-primary {
+      padding: 14px 32px;
+      font-size: 20px;
+      border-radius: 999px;
+      border: none;
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .btn-primary:hover {
+      background-color: #3b78bf;
+    }
+
+    .label-input {
+      width: 80%;
+      max-width: 500px;
+      padding: 12px;
+      font-size: 17px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 12px;
+    }
+
+    .phase-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Idil Su's Experiment</h1>
+  <div id="app"></div>
+
+  <script>
+    /* ------------------------------
+       1. STIMULUS SETUP
+    ------------------------------ */
+
+    const stimuli = [
+      { id: 1,  name: 'Clapping',                             file: 'stimuli/Clapping.mov' },
+      { id: 2,  name: 'Hand_waving',                          file: 'stimuli/Hand_waving.mov' },
+      { id: 3,  name: 'Cross_arms',                           file: 'stimuli/Cross_arms.mov' },
+      { id: 4,  name: 'Pat_on_the back_or_comecome',          file: 'stimuli/Pat_on_the back_or_comecome.mov' },
+      { id: 5,  name: 'Salute',                               file: 'stimuli/Salute.mov' },
+      { id: 6,  name: 'Say_stop',                             file: 'stimuli/Say_stop.mov' },
+      { id: 7,  name: 'Cheer',                                file: 'stimuli/Cheer.mov' },
+      { id: 8,  name: 'Stomp_or_step_on_foot',                file: 'stimuli/Stomp_or_step_on_foot.mov' },
+      { id: 9,  name: 'Thumb_down',                           file: 'stimuli/Thumb_down.mov' },
+      { id: 10, name: 'Thumb_up',                             file: 'stimuli/Thumb_up.mov' }
+    ];
+
+    // For the CSV: "Clapping = 1"
+    function skeletonString(stim) {
+      return `${stim.name} = ${stim.id}`;
+    }
+
+    // For the display: "Skeleton 3"
+    function displaySkeleton(stim) {
+      return `Skeleton ${stim.id}`;
+    }
+
+    function makeAllPairs(arr) {
+      const pairs = [];
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+          pairs.push([arr[i], arr[j]]);
+        }
+      }
+      return pairs;
+    }
+
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    const allPairs   = shuffle(makeAllPairs(stimuli));
+    const labelOrder = shuffle(stimuli.slice());
+
+    let currentIndex    = 0;
+    let labelIndex      = 0;
+    let participantName = '';
+    let participantAge  = '';
+    let participantGender = '';
+
+    const similarityResults = [];
+    const labelResults      = [];
+
+    const app = document.getElementById("app");
+
+    let keyHandler = null;
+    function setKeyHandler(h) {
+      if (keyHandler) document.removeEventListener("keydown", keyHandler);
+      keyHandler = h;
+      if (h) document.addEventListener("keydown", h);
+    }
+
+    /* ------------------------------
+       2. INTRO PAGES
+    ------------------------------ */
+
+    function showInitialIntro() {
+      setKeyHandler(null);
+
+      app.innerHTML = `
+        <div class="intro-text">
+          <p>
+            Welcome! You will complete <strong>two tasks</strong>.
+          </p>
+          <p>
+            <strong>Task 1</strong> will take about <strong>15 minutes</strong>.<br>
+            <strong>Task 2</strong> will take about <strong>5 minutes</strong>.
+          </p>
+          <p>
+            When you're ready, fill in your details and press Start.
+          </p>
+        </div>
+
+        <div class="name-input">
+          <div style="margin-bottom:5px;">Name:</div>
+          <input id="name-field" type="text" placeholder="Your name">
+        </div>
+
+        <div class="name-input">
+          <div style="margin-bottom:5px;">Age:</div>
+          <input id="age-field" type="number" min="0" max="120" placeholder="Your age">
+        </div>
+
+        <div class="name-input">
+          <div style="margin-bottom:5px;">Gender:</div>
+          <div class="gender-options">
+            <label><input type="radio" name="gender" value="Female"> Female</label>
+            <label><input type="radio" name="gender" value="Male"> Male</label>
+            <label><input type="radio" name="gender" value="Prefer not to say"> Prefer not to say</label>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="intro-start">Start</button>
+      `;
+
+      document.getElementById("intro-start").onclick = () => {
+        const name = document.getElementById("name-field").value.trim();
+        const age  = document.getElementById("age-field").value.trim();
+        const genderRadio = document.querySelector('input[name="gender"]:checked');
+
+        if (!name) {
+          alert("Please enter your name.");
+          return;
+        }
+        if (!age) {
+          alert("Please enter your age.");
+          return;
+        }
+        if (!genderRadio) {
+          alert("Please select your gender.");
+          return;
+        }
+
+        participantName   = name;
+        participantAge    = age;
+        participantGender = genderRadio.value;
+
+        showTask1Intro();
+      };
+    }
+
+    function showTask1Intro() {
+      app.innerHTML = `
+        <div class="intro-text">
+          <p>
+            In this task, you will see pairs of short videos showing human
+            <strong>communicative actions</strong> performed by skeleton figures.
+            Imagine that each skeleton is interacting with a person just outside the frame –
+            so each movement conveys a communicative intention.
+            Examples include a thumbs up, a cheer, a stomp...
+          </p>
+          <p>
+            Your task is to rate how similar the two communicative actions are on a scale from
+            1 (<strong>not similar at all</strong>) to 
+            7 (<strong>very similar</strong>).
+            You can replay each video as many times as you want.
+          </p>
+          <p>
+            You may answer by clicking on a number or using the keys <strong>1–7</strong>.
+          </p>
+        </div>
+        <button class="btn-primary" id="task1-start">Begin Task 1</button>
+      `;
+      document.getElementById("task1-start").onclick = showSimilarityTrial;
+    }
+
+    /* ------------------------------
+       3. TASK 1 — SIMILARITY RATING
+    ------------------------------ */
+
+    function showSimilarityTrial() {
+      if (currentIndex >= allPairs.length) {
+        showTask2Intro();
+        return;
+      }
+
+      const [L, R] = allPairs[currentIndex];
+      const progress = Math.round((currentIndex / allPairs.length) * 100);
+
+      app.innerHTML = `
+        <div class="phase-title">Task 1: Similarity Ratings</div>
+
+        <div class="progress-wrapper">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:${progress}%;"></div>
+          </div>
+          <div class="progress-text">
+            Pair ${currentIndex + 1} of ${allPairs.length}
+          </div>
+        </div>
+
+        <div class="video-pair">
+          <div class="video-block">
+            <div class="video-title">${displaySkeleton(L)}</div>
+            <video controls><source src="${L.file}" type="video/quicktime"></video>
+          </div>
+          <div class="video-block">
+            <div class="video-title">${displaySkeleton(R)}</div>
+            <video controls><source src="${R.file}" type="video/quicktime"></video>
+          </div>
+        </div>
+
+        <div class="likert-wrapper">
+          <div class="question">How similar are these two actions?</div>
+          <div class="rating-buttons">
+            ${[1,2,3,4,5,6,7].map(n =>
+              `<button data-r="${n}">${n}</button>`).join("")}
+          </div>
+          <div class="likert-labels">
+            <span>Not similar at all</span>
+            <span>Very similar</span>
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll("[data-r]").forEach(btn => {
+        btn.onclick = () => storeSimilarity(L, R, parseInt(btn.dataset.r));
+      });
+
+      setKeyHandler(e => {
+        const n = parseInt(e.key);
+        if (n>=1 && n<=7) storeSimilarity(L, R, n);
+      });
+    }
+
+    function storeSimilarity(L, R, rating) {
+      similarityResults.push({
+        participant: participantName,
+        age: participantAge,
+        gender: participantGender,
+        trial_index: currentIndex,
+        left_skeleton: skeletonString(L),
+        right_skeleton: skeletonString(R),
+        rating: rating
+      });
+      currentIndex++;
+      showSimilarityTrial();
+    }
+
+    /* ------------------------------
+       4. TASK 2 — INTRO
+    ------------------------------ */
+
+    function showTask2Intro() {
+      setKeyHandler(null);
+
+      app.innerHTML = `
+        <div class="intro-text">
+          <p>
+            Thank you !
+          </p>
+          <p>
+            Now you will see each skeleton action individually.
+            For each video, please type what communicative meaning you believe
+            the action expresses.
+          </p>
+        </div>
+        <button class="btn-primary" id="task2-start">Begin Task 2</button>
+      `;
+
+      document.getElementById("task2-start").onclick = showLabelTrial;
+    }
+
+    /* ------------------------------
+       5. TASK 2 — LABELING
+    ------------------------------ */
+
+    function showLabelTrial() {
+      if (labelIndex >= labelOrder.length) {
+        finishExperiment();
+        return;
+      }
+
+      const stim = labelOrder[labelIndex];
+      const progress = Math.round((labelIndex / labelOrder.length) * 100);
+
+      app.innerHTML = `
+        <div class="phase-title">Task 2: Communicative Meaning</div>
+
+        <div class="progress-wrapper">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:${progress}%;"></div>
+          </div>
+          <div class="progress-text">Video ${labelIndex + 1} of ${labelOrder.length}</div>
+        </div>
+
+        <div class="video-pair">
+          <div class="video-block">
+            <div class="video-title">${displaySkeleton(stim)}</div>
+            <video controls><source src="${stim.file}" type="video/quicktime"></video>
+          </div>
+        </div>
+
+        <div class="question">What communicative action is this?</div>
+        <input id="lab-in" class="label-input" placeholder="e.g., waving hello, saying stop">
+        <br>
+        <button class="btn-primary" id="lab-next">Next</button>
+      `;
+
+      const inp = document.getElementById("lab-in");
+      const nxt = document.getElementById("lab-next");
+
+      nxt.onclick = () => {
+        const val = inp.value.trim();
+        if (!val) { alert("Please enter a response."); return; }
+        storeLabel(stim, val);
+      };
+
+      setKeyHandler(e => { if (e.key==="Enter") nxt.click(); });
+    }
+
+    function storeLabel(stim, label) {
+      labelResults.push({
+        participant: participantName,
+        age: participantAge,
+        gender: participantGender,
+        trial_index: labelIndex,
+        skeleton: skeletonString(stim),
+        label: label
+      });
+      labelIndex++;
+      showLabelTrial();
+    }
+
+/* ------------------------------
+   6. FINISH — DOWNLOAD ONE FILE
+------------------------------ */
+
+function finishExperiment() {
+  setKeyHandler(null);
+
+  app.innerHTML = `
+    <div class="intro-text">
+      <p><strong>Thank you for participating!</strong></p>
+      <p>Your data file is downloading now.</p>
+    </div>
+  `;
+
+  // Combine into one dataset
+  const combined = [];
+
+  similarityResults.forEach(r => {
+    combined.push({
+      participant: r.participant,
+      age: r.age,
+      gender: r.gender,
+      phase: "similarity",
+      trial_index: r.trial_index,
+      left_skeleton: r.left_skeleton,
+      right_skeleton: r.right_skeleton,
+      rating: r.rating,
+      skeleton: "",
+      label: ""
+    });
+  });
+
+  labelResults.forEach(r => {
+    combined.push({
+      participant: r.participant,
+      age: r.age,
+      gender: r.gender,
+      phase: "label",
+      trial_index: r.trial_index,
+      left_skeleton: "",
+      right_skeleton: "",
+      rating: "",
+      skeleton: r.skeleton,
+      label: r.label
+    });
+  });
+
+  // Create CSV
+  const header = [
+    "Participant","Age","Gender","Task","Trial_index",
+    "left_skeleton","right_skeleton","Rating",
+    "Skeleton","Action"
+  ];
+
+  const csv = [
+    header.join(","),
+    ...combined.map(row =>
+      header.map(h => JSON.stringify(row[h] ?? "")).join(",")
+    )
+  ].join("\n");
+
+  // Download
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = "idilsu_experiment_data.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+    /* ------------------------------
+       7. START
+    ------------------------------ */
+
+    window.onload = showInitialIntro;
+  </script>
+</body>
+</html>
