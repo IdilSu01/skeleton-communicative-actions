@@ -481,9 +481,9 @@
       labelIndex++;
       showLabelTrial();
     }
-
+    
 /* ------------------------------
-   6. FINISH — SEND TO GOOGLE SHEETS (no-CORS)
+   6. FINISH — SEND VIA HIDDEN FORM
 ------------------------------ */
 
 function finishExperiment() {
@@ -526,23 +526,39 @@ function finishExperiment() {
   app.innerHTML = `
     <div class="intro-text">
       <p><strong>Thank you for participating!</strong></p>
-      <p>Your responses are being securely sent. Please do not close this window yet.</p>
+      <p>Your responses are being securely sent. Please do not close this window for a few seconds.</p>
     </div>
   `;
 
-  // Your Apps Script Web app URL
   const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwqvm5Hp_u3OtWQU3e_10wl9IX3xRc5rV0WkGAfiaEy45din86wbjiuiaEsOc_G4ADC/exec";
 
-  // Send data in no-cors mode with a "simple" content-type
-  fetch(ENDPOINT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ data: combined })
-  })
-  .then(() => {
-    // In no-cors mode we can't inspect the response,
-    // so we just assume success and tell the participant they're done.
+  try {
+    const payload = JSON.stringify({ data: combined });
+
+    // Create hidden iframe (so the page doesn't navigate away)
+    const iframe = document.createElement("iframe");
+    iframe.name = "hidden_iframe";
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    // Create a plain HTML form that posts to Apps Script
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = ENDPOINT_URL;
+    form.target = "hidden_iframe";
+
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload";
+    input.value = payload;
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+
+    // Submit the form (browser navigation, not fetch → no CORS issues)
+    form.submit();
+
+    // Tell participant they are done
     app.innerHTML = `
       <div class="intro-text">
         <p><strong>Thank you for participating!</strong></p>
@@ -550,11 +566,11 @@ function finishExperiment() {
         <p>You may now close this window.</p>
       </div>
     `;
-  })
-  .catch(err => {
-    console.error("Upload failed:", err);
 
-    // FALLBACK: download CSV if something *really* goes wrong
+  } catch (err) {
+    console.error("Upload via form failed:", err);
+
+    // LAST-RESORT FALLBACK: download CSV
     const header = [
       "Participant","Age","Gender","Task","Trial_index",
       "left_skeleton","right_skeleton","Rating",
@@ -590,9 +606,8 @@ function finishExperiment() {
         Please send it to the experimenter.</p>
       </div>
     `;
-  });
+  }
 }
-
     /* ------------------------------
        7. START
     ------------------------------ */
