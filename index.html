@@ -483,7 +483,7 @@
     }
 
 /* ------------------------------
-   6. FINISH — SEND TO GOOGLE SHEETS
+   6. FINISH — SEND TO GOOGLE SHEETS (no-CORS)
 ------------------------------ */
 
 function finishExperiment() {
@@ -530,16 +530,19 @@ function finishExperiment() {
     </div>
   `;
 
-  // >>> Put your Apps Script Web app URL here <<<
+  // Your Apps Script Web app URL
   const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwqvm5Hp_u3OtWQU3e_10wl9IX3xRc5rV0WkGAfiaEy45din86wbjiuiaEsOc_G4ADC/exec";
 
-  // Try to send data to Google Sheets
+  // Send data in no-cors mode with a "simple" content-type
   fetch(ENDPOINT_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ data: combined })
   })
   .then(() => {
+    // In no-cors mode we can't inspect the response,
+    // so we just assume success and tell the participant they're done.
     app.innerHTML = `
       <div class="intro-text">
         <p><strong>Thank you for participating!</strong></p>
@@ -551,7 +554,7 @@ function finishExperiment() {
   .catch(err => {
     console.error("Upload failed:", err);
 
-    // FALLBACK: download CSV if upload fails
+    // FALLBACK: download CSV if something *really* goes wrong
     const header = [
       "Participant","Age","Gender","Task","Trial_index",
       "left_skeleton","right_skeleton","Rating",
@@ -562,9 +565,8 @@ function finishExperiment() {
       header.join(","),
       ...combined.map(row =>
         header.map(h => {
-          // map header names to object keys
           const key =
-            h === "Task" ? "phase" :
+            h === "Task"   ? "phase" :
             h === "Action" ? "label" :
             h.toLowerCase();
           return JSON.stringify(row[key] ?? "");
@@ -583,9 +585,9 @@ function finishExperiment() {
     app.innerHTML = `
       <div class="intro-text">
         <p><strong>Thank you for participating!</strong></p>
-        <p>Trouble sending  your data automatically,
+        <p>We had trouble sending your data automatically,
         so a file has been downloaded instead.  
-        Please send it to me :).</p>
+        Please send it to the experimenter.</p>
       </div>
     `;
   });
