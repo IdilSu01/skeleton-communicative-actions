@@ -531,7 +531,7 @@ function finishExperiment() {
   `;
 
   // >>> Put your Apps Script Web app URL here <<<
-  const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwqvm5Hp_u3OtWQU3e_10wl9IX3xRc5rV0WkGAfiaEy45din86wbjiuiaEsOc_G4ADC/exec";
+  const ENDPOINT_URL = "https://script.google.com/macros/library/d/1_6iiSMqKLTYRXzJLwHNtSTELWkHvHUfcV9QHEKmSxLSbYhI7u4xcFWfV/1";
 
   // Try to send data to Google Sheets
   fetch(ENDPOINT_URL, {
@@ -583,9 +583,9 @@ function finishExperiment() {
     app.innerHTML = `
       <div class="intro-text">
         <p><strong>Thank you for participating!</strong></p>
-        <p>We had trouble sending your data automatically,
+        <p>Trouble sending  your data automatically,
         so a file has been downloaded instead.  
-        Please send it to the experimenter.</p>
+        Please send it to me :).</p>
       </div>
     `;
   });
