@@ -481,9 +481,8 @@
       labelIndex++;
       showLabelTrial();
     }
-    
 /* ------------------------------
-   6. FINISH — SEND VIA HIDDEN FORM
+   6. FINISH — SIMPLE FORM POST (redirects)
 ------------------------------ */
 
 function finishExperiment() {
@@ -522,91 +521,31 @@ function finishExperiment() {
     });
   });
 
-  // Show "sending" message
+  // Tell the participant what's happening
   app.innerHTML = `
     <div class="intro-text">
       <p><strong>Thank you for participating!</strong></p>
-      <p>Your responses are being securely sent. Please do not close this window for a few seconds.</p>
+      <p>Your responses are now being sent. You will be redirected to a confirmation page.</p>
     </div>
   `;
 
   const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwqvm5Hp_u3OtWQU3e_10wl9IX3xRc5rV0WkGAfiaEy45din86wbjiuiaEsOc_G4ADC/exec";
 
-  try {
-    const payload = JSON.stringify({ data: combined });
+  // Build a plain HTML form and submit it (browser navigation)
+  const payload = JSON.stringify({ data: combined });
 
-    // Create hidden iframe (so the page doesn't navigate away)
-    const iframe = document.createElement("iframe");
-    iframe.name = "hidden_iframe";
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = ENDPOINT_URL;
 
-    // Create a plain HTML form that posts to Apps Script
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = ENDPOINT_URL;
-    form.target = "hidden_iframe";
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "payload";
+  input.value = payload;
+  form.appendChild(input);
 
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = "payload";
-    input.value = payload;
-    form.appendChild(input);
-
-    document.body.appendChild(form);
-
-    // Submit the form (browser navigation, not fetch → no CORS issues)
-    form.submit();
-
-    // Tell participant they are done
-    app.innerHTML = `
-      <div class="intro-text">
-        <p><strong>Thank you for participating!</strong></p>
-        <p>Your responses have been recorded.</p>
-        <p>You may now close this window.</p>
-      </div>
-    `;
-
-  } catch (err) {
-    console.error("Upload via form failed:", err);
-
-    // LAST-RESORT FALLBACK: download CSV
-    const header = [
-      "Participant","Age","Gender","Task","Trial_index",
-      "left_skeleton","right_skeleton","Rating",
-      "Skeleton","Action"
-    ];
-
-    const csv = [
-      header.join(","),
-      ...combined.map(row =>
-        header.map(h => {
-          const key =
-            h === "Task"   ? "phase" :
-            h === "Action" ? "label" :
-            h.toLowerCase();
-          return JSON.stringify(row[key] ?? "");
-        }).join(",")
-      )
-    ].join("\n");
-
-    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url;
-    a.download = "idilsu_experiment_data_backup.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-
-    app.innerHTML = `
-      <div class="intro-text">
-        <p><strong>Thank you for participating!</strong></p>
-        <p>We had trouble sending your data automatically,
-        so a file has been downloaded instead.  
-        Please send it to the experimenter.</p>
-      </div>
-    `;
-  }
+  document.body.appendChild(form);
+  form.submit();
 }
     /* ------------------------------
        7. START
