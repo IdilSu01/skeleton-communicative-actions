@@ -481,14 +481,22 @@
       labelIndex++;
       showLabelTrial();
     }
+    
 /* ------------------------------
-   6. FINISH — SIMPLE FORM POST (redirects)
+   6. FINISH — DOWNLOAD ONE CSV FILE
 ------------------------------ */
 
 function finishExperiment() {
   setKeyHandler(null);
 
-  // Combine similarity + label results into one array
+  app.innerHTML = `
+    <div class="intro-text">
+      <p><strong>Thank you for participating!</strong></p>
+      <p>Your data file is being generated.</p>
+    </div>
+  `;
+
+  // Combine similarity and labels into one file
   const combined = [];
 
   similarityResults.forEach(r => {
@@ -521,31 +529,36 @@ function finishExperiment() {
     });
   });
 
-  // Tell the participant what's happening
+  const header = [
+    "participant","age","gender",
+    "phase","trial_index",
+    "left_skeleton","right_skeleton","rating",
+    "skeleton","label"
+  ];
+
+  const csv = [
+    header.join(","),
+    ...combined.map(row =>
+      header.map(h => JSON.stringify(row[h] ?? "")).join(",")
+    )
+  ].join("\n");
+
+  // Download file
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "IdilSu_Experiment_Data.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Final message
   app.innerHTML = `
     <div class="intro-text">
-      <p><strong>Thank you for participating!</strong></p>
-      <p>Your responses are now being sent. You will be redirected to a confirmation page.</p>
+      <p><strong>Thank you!</strong><br>Your data has been saved.</p>
+      <p>You may close this window.</p>
     </div>
   `;
-
-  const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwwULLf9yz9_3cp7-IkgMVlcYDzuRrI9vEEEzq3vhLT-9MPUvGfKUYrF0DlaqrH-6De/exec";
-
-  // Build a plain HTML form and submit it (browser navigation)
-  const payload = JSON.stringify({ data: combined });
-
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = ENDPOINT_URL;
-
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "payload";
-  input.value = payload;
-  form.appendChild(input);
-
-  document.body.appendChild(form);
-  form.submit();
 }
     /* ------------------------------
        7. START
