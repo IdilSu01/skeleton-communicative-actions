@@ -407,7 +407,7 @@
       app.innerHTML = `
         <div class="intro-text">
           <p>
-            Thank you !
+            Thank you!
           </p>
           <p>
             Now you will see each skeleton action individually.
@@ -481,85 +481,87 @@
       labelIndex++;
       showLabelTrial();
     }
-    
-/* ------------------------------
-   6. FINISH — DOWNLOAD ONE CSV FILE
------------------------------- */
 
-function finishExperiment() {
-  setKeyHandler(null);
+    /* ------------------------------
+       6. FINISH — DOWNLOAD ONE CSV
+    ------------------------------ */
 
-  app.innerHTML = `
-    <div class="intro-text">
-      <p><strong>Thank you for participating!</strong></p>
-      <p>Your data file is being generated.</p>
-    </div>
-  `;
+    function finishExperiment() {
+      setKeyHandler(null);
 
-  // Combine similarity and labels into one file
-  const combined = [];
+      app.innerHTML = `
+        <div class="intro-text">
+          <p><strong>Thank you for participating!</strong></p>
+          <p>Your data file is being generated. Please save it and send it to the experimenter.</p>
+        </div>
+      `;
 
-  similarityResults.forEach(r => {
-    combined.push({
-      participant: r.participant,
-      age: r.age,
-      gender: r.gender,
-      phase: "similarity",
-      trial_index: r.trial_index,
-      left_skeleton: r.left_skeleton,
-      right_skeleton: r.right_skeleton,
-      rating: r.rating,
-      skeleton: "",
-      label: ""
-    });
-  });
+      // Combine similarity + labels into single long-format dataset
+      const combined = [];
 
-  labelResults.forEach(r => {
-    combined.push({
-      participant: r.participant,
-      age: r.age,
-      gender: r.gender,
-      phase: "label",
-      trial_index: r.trial_index,
-      left_skeleton: "",
-      right_skeleton: "",
-      rating: "",
-      skeleton: r.skeleton,
-      label: r.label
-    });
-  });
+      similarityResults.forEach(r => {
+        combined.push({
+          participant: r.participant,
+          age: r.age,
+          gender: r.gender,
+          phase: "similarity",
+          trial_index: r.trial_index,
+          left_skeleton: r.left_skeleton,
+          right_skeleton: r.right_skeleton,
+          rating: r.rating,
+          skeleton: "",
+          label: ""
+        });
+      });
 
-  const header = [
-    "participant","age","gender",
-    "phase","trial_index",
-    "left_skeleton","right_skeleton","rating",
-    "skeleton","label"
-  ];
+      labelResults.forEach(r => {
+        combined.push({
+          participant: r.participant,
+          age: r.age,
+          gender: r.gender,
+          phase: "label",
+          trial_index: r.trial_index,
+          left_skeleton: "",
+          right_skeleton: "",
+          rating: "",
+          skeleton: r.skeleton,
+          label: r.label
+        });
+      });
 
-  const csv = [
-    header.join(","),
-    ...combined.map(row =>
-      header.map(h => JSON.stringify(row[h] ?? "")).join(",")
-    )
-  ].join("\n");
+      const header = [
+        "participant","age","gender",
+        "phase","trial_index",
+        "left_skeleton","right_skeleton","rating",
+        "skeleton","label"
+      ];
 
-  // Download file
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "IdilSu_Experiment_Data.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+      const csv = [
+        header.join(","),
+        ...combined.map(row =>
+          header.map(h => JSON.stringify(row[h] ?? "")).join(",")
+        )
+      ].join("\n");
 
-  // Final message
-  app.innerHTML = `
-    <div class="intro-text">
-      <p><strong>Thank you!</strong><br>Your data has been saved.</p>
-      <p>You may close this window.</p>
-    </div>
-  `;
-}
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = "IdilSu_CommunicativeActions_Data.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      app.innerHTML = `
+        <div class="intro-text">
+          <p><strong>Thank you!</strong></p>
+          <p>Your data file has been downloaded. Please send it to the experimenter.</p>
+          <p>You may now close this window.</p>
+        </div>
+      `;
+    }
+
     /* ------------------------------
        7. START
     ------------------------------ */
