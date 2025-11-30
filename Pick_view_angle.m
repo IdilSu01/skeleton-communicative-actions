@@ -19,7 +19,7 @@ function Pick_view_angle
         error('No skeleton files found. Check dataPath/fileFilter.');
     end
 
-    % --- We will use ONLY the first matching file to choose a view ---
+    % --- I will use ONLY the first matching file to choose a view ---
     file = fullfile(dataPath, files(1).name);
     fprintf('Using file: %s\n', files(1).name);
 
